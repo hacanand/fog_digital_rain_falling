@@ -18,8 +18,8 @@
  export default function RainGrid() {
    const [raindrops, setRaindrops] = useState<RainDrop[]>([]);
    const [isPlaying, setIsPlaying] = useState(true);
-   const [speed, setSpeed] = useState(1);
-   const [density, setDensity] = useState(0.3);
+   const [speed, setSpeed] = useState(1.4);
+   const [density, setDensity] = useState(0.1);
    const [gridSize, setGridSize] = useState({ width: 40, height: 25 });
 
    //different and unique colors
@@ -33,26 +33,14 @@
       "#9400D3",
     
    ]; 
-
-  //  const createRaindrop = useCallback(
-  //    (x: number, y: number = -1): RainDrop => {
-  //      return {
-  //        x,
-  //        y,
-  //        color: colors[Math.floor(Math.random() * colors.length)],
-  //        length: Math.floor(Math.random() * 3) + 4, // Random length between 4 and 6
-  //      };
-  //    },
-  //    [colors]
-  //  );
+ 
   const createRaindrop = useCallback(
     (x: number, y: number = -1): RainDrop => {
       const colorIndex = Math.floor(Math.random() * colors.length);
       const color = colors[colorIndex];
       const nextColor = colors[(colorIndex + 1) % colors.length];
       const gradient = `linear-gradient(${color}, ${nextColor})`;
-      // console.log(gradient);
-
+      
       return {
         x,
         y,
@@ -152,7 +140,7 @@
                </Button>
              </div>
 
-             <div className="space-y-2">
+             <div className="space-y-2 text-white">
                <Label>Speed</Label>
                <Slider
                  value={[speed]}
@@ -163,7 +151,7 @@
                />
              </div>
 
-             <div className="space-y-2">
+             <div className="space-y-2 text-white">
                <Label>Density</Label>
                <Slider
                  value={[density]}
@@ -176,7 +164,7 @@
 
              <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
-                 <Label>Width</Label>
+                 <Label className="text-white">Width</Label>
                  <Input
                    type="number"
                    value={gridSize.width}
@@ -191,7 +179,7 @@
                  />
                </div>
                <div className="space-y-2">
-                 <Label>Height</Label>
+                 <Label className="text-white">Height</Label>
                  <Input
                    type="number"
                    value={gridSize.height}
