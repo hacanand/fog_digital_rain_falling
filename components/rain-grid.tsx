@@ -1,154 +1,215 @@
-'use client'
+ "use client";
 
-import { useEffect, useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Slider } from '@/components/ui/slider'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { PlayIcon, PauseIcon, RefreshCwIcon } from 'lucide-react'
+ import { useEffect, useState, useCallback } from "react";
+ import { Card } from "@/components/ui/card";
+ import { Slider } from "@/components/ui/slider";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import { Label } from "@/components/ui/label";
+ import { PlayIcon, PauseIcon, RefreshCwIcon } from "lucide-react";
 
-interface Drop {
-  x: number
-  y: number
-  color: string
-}
+ interface RainDrop {
+   x: number;
+   y: number;
+   color: string;
+   length: number;
+ }
 
-export default function RainGrid() {
-  const [drops, setDrops] = useState<Drop[]>([])
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [speed, setSpeed] = useState(1)
-  const [density, setDensity] = useState(0.3)
-  const [gridSize, setGridSize] = useState({ width: 40, height: 25 })
+ export default function RainGrid() {
+   const [raindrops, setRaindrops] = useState<RainDrop[]>([]);
+   const [isPlaying, setIsPlaying] = useState(true);
+   const [speed, setSpeed] = useState(1);
+   const [density, setDensity] = useState(0.3);
+   const [gridSize, setGridSize] = useState({ width: 40, height: 25 });
 
-  const colors = ['#4834d4', '#686de0'] // Blue and purple colors
+   //different and unique colors
+   const colors = [
+      "#FF0000",
+      "#FF7F00",
+      "#FFFF00",
+      "#00FF00",
+      "#0000FF",
+      "#4B0082",
+      "#9400D3",
+    
+   ]; 
 
-  useEffect(() => {
-    if (!isPlaying) return
+  //  const createRaindrop = useCallback(
+  //    (x: number, y: number = -1): RainDrop => {
+  //      return {
+  //        x,
+  //        y,
+  //        color: colors[Math.floor(Math.random() * colors.length)],
+  //        length: Math.floor(Math.random() * 3) + 4, // Random length between 4 and 6
+  //      };
+  //    },
+  //    [colors]
+  //  );
+  const createRaindrop = useCallback(
+    (x: number, y: number = -1): RainDrop => {
+      const colorIndex = Math.floor(Math.random() * colors.length);
+      const color = colors[colorIndex];
+      const nextColor = colors[(colorIndex + 1) % colors.length];
+      const gradient = `linear-gradient(${color}, ${nextColor})`;
+      // console.log(gradient);
 
-    const interval = setInterval(() => {
-      setDrops(prevDrops => {
-        // Move existing drops down
-        const movedDrops = prevDrops
-          .map(drop => ({
-            ...drop,
-            y: drop.y + 1
-          }))
-          .filter(drop => drop.y < gridSize.height)
+      return {
+        x,
+        y,
+        color: gradient,
+        length: Math.floor(Math.random() * 3) + 6, // Random length between 4 and 6
+      };
+    },
+    [colors]
+  );
+   useEffect(() => {
+     if (!isPlaying) return;
 
-        // Add new drops at the top
-        const newDrops = Array.from({ length: gridSize.width }).map((_, x) => ({
-          x,
-          y: 0,
-          color: Math.random() < density ? colors[Math.floor(Math.random() * colors.length)] : 'transparent'
-        }))
+     const interval = setInterval(() => {
+       setRaindrops((prevDrops) => {
+         // Move existing raindrops down
+         const movedDrops = prevDrops
+           .map((drop) => ({
+             ...drop,
+             y: drop.y + 1,
+           }))
+           .filter((drop) => drop.y < gridSize.height + drop.length);
 
-        return [...movedDrops, ...newDrops.filter(drop => drop.color !== 'transparent')]
-      })
-    }, 100 / speed)
+         // Add new raindrops at the top
+         const newDrops = Array.from({ length: gridSize.width })
+           .map((_, x) => {
+             if (
+               Math.random() < density &&
+               !movedDrops.some((drop) => drop.x === x && drop.y < 0)
+             ) {
+               return createRaindrop(x);
+             }
+             return null;
+           })
+           .filter((drop): drop is RainDrop => drop !== null);
 
-    return () => clearInterval(interval)
-  }, [isPlaying, speed, density, gridSize])
+         return [...movedDrops, ...newDrops];
+       });
+     }, 100 / speed);
 
-  const handleReset = () => {
-    setDrops([])
-    setIsPlaying(true)
-  }
+     return () => clearInterval(interval);
+   }, [isPlaying, speed, density, gridSize, createRaindrop]);
 
-  return (
-    <div className="min-h-screen bg-black p-8 flex flex-col items-center gap-8">
-      <Card className="p-8 bg-zinc-900 border-zinc-800">
-        <div className="flex flex-col gap-8">
-          <div 
-            className="grid gap-[1px] bg-zinc-800" 
-            style={{
-              gridTemplateColumns: `repeat(${gridSize.width}, 20px)`,
-              gridTemplateRows: `repeat(${gridSize.height}, 20px)`
-            }}
-          >
-            {Array.from({ length: gridSize.height * gridSize.width }).map((_, i) => {
-              const x = i % gridSize.width
-              const y = Math.floor(i / gridSize.width)
-              const drop = drops.find(d => d.x === x && d.y === y)
-              
-              return (
-                <div
-                  key={i}
-                  className="w-5 h-5 transition-colors duration-200"
-                  style={{
-                    backgroundColor: drop ? drop.color : '#000'
-                  }}
-                />
-              )
-            })}
-          </div>
+   const handleReset = () => {
+     setRaindrops([]);
+     setIsPlaying(true);
+   };
 
-          <div className="grid gap-4">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handleReset}
-              >
-                <RefreshCwIcon className="h-4 w-4" />
-              </Button>
-            </div>
+   return (
+     <div className="min-h-screen bg-black p-8 flex flex-col items-center gap-8">
+       <Card className="p-8 bg-zinc-900 border-zinc-800">
+         <div className="flex flex-col gap-8">
+           <div
+             className="grid gap-[1px] bg-zinc-800"
+             style={{
+               gridTemplateColumns: `repeat(${gridSize.width}, 20px)`,
+               gridTemplateRows: `repeat(${gridSize.height}, 20px)`,
+             }}
+           >
+             {Array.from({ length: gridSize.height * gridSize.width }).map(
+               (_, i) => {
+                 const x = i % gridSize.width;
+                 const y = Math.floor(i / gridSize.width);
+                 const raindrop = raindrops.find(
+                   (drop) =>
+                     drop.x === x && y >= drop.y && y < drop.y + drop.length
+                 );
+                  //  console.log(raindrop?.color);
+                 return (
+                   <div
+                     key={i}
+                     className="w-5 h-5 transition-colors duration-200"
+                     style={{
+                       background: raindrop ? raindrop.color : "#000000",
+                        
+                     }}
+                   />
+                 );
+               }
+             )}
+           </div>
 
-            <div className="space-y-2 text-white">
-              <Label>Speed</Label>
-              <Slider
-                value={[speed]}
-                onValueChange={([value]) => setSpeed(value)}
-                min={0.1}
-                max={3}
-                step={0.1}
-              />
-            </div>
+           <div className="grid gap-4">
+             <div className="flex items-center gap-4">
+               <Button
+                 variant="outline"
+                 size="icon"
+                 onClick={() => setIsPlaying(!isPlaying)}
+               >
+                 {isPlaying ? (
+                   <PauseIcon className="h-4 w-4" />
+                 ) : (
+                   <PlayIcon className="h-4 w-4" />
+                 )}
+               </Button>
+               <Button variant="outline" size="icon" onClick={handleReset}>
+                 <RefreshCwIcon className="h-4 w-4" />
+               </Button>
+             </div>
 
-            <div className="space-y-2 text-white">
-              <Label>Density</Label>
-              <Slider
-                value={[density]}
-                onValueChange={([value]) => setDensity(value)}
-                min={0.1}
-                max={1}
-                step={0.1}
-              />
-            </div>
+             <div className="space-y-2">
+               <Label>Speed</Label>
+               <Slider
+                 value={[speed]}
+                 onValueChange={([value]) => setSpeed(value)}
+                 min={0.1}
+                 max={3}
+                 step={0.1}
+               />
+             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Width</Label>
-                <Input
-                  type="number"
-                  value={gridSize.width}
-                  onChange={(e) => setGridSize(prev => ({ ...prev, width: parseInt(e.target.value) || 1 }))}
-                  min={1}
-                  max={50}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Height</Label>
-                <Input
-                  type="number"
-                  value={gridSize.height}
-                  onChange={(e) => setGridSize(prev => ({ ...prev, height: parseInt(e.target.value) || 1 }))}
-                  min={1}
-                  max={50}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  )
-}
+             <div className="space-y-2">
+               <Label>Density</Label>
+               <Slider
+                 value={[density]}
+                 onValueChange={([value]) => setDensity(value)}
+                 min={0.1}
+                 max={1}
+                 step={0.1}
+               />
+             </div>
+
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label>Width</Label>
+                 <Input
+                   type="number"
+                   value={gridSize.width}
+                   onChange={(e) =>
+                     setGridSize((prev) => ({
+                       ...prev,
+                       width: parseInt(e.target.value) || 1,
+                     }))
+                   }
+                   min={1}
+                   max={50}
+                 />
+               </div>
+               <div className="space-y-2">
+                 <Label>Height</Label>
+                 <Input
+                   type="number"
+                   value={gridSize.height}
+                   onChange={(e) =>
+                     setGridSize((prev) => ({
+                       ...prev,
+                       height: parseInt(e.target.value) || 1,
+                     }))
+                   }
+                   min={1}
+                   max={50}
+                 />
+               </div>
+             </div>
+           </div>
+         </div>
+       </Card>
+     </div>
+   );
+ }
 
