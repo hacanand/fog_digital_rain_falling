@@ -19,7 +19,7 @@
    const [raindrops, setRaindrops] = useState<RainDrop[]>([]);
    const [isPlaying, setIsPlaying] = useState(true);
    const [speed, setSpeed] = useState(1.4);
-   const [density, setDensity] = useState(0.1);
+   const [density, setDensity] = useState(0.01);
    const [gridSize, setGridSize] = useState({ width: 40, height: 25 });
 
    //different and unique colors
@@ -156,9 +156,9 @@
                <Slider
                  value={[density]}
                  onValueChange={([value]) => setDensity(value)}
-                 min={0.1}
-                 max={1}
-                 step={0.1}
+                 min={0.01}
+                 max={0.1}
+                 step={0.01}
                />
              </div>
 
